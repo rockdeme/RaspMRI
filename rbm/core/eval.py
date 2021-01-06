@@ -1,5 +1,5 @@
 import numpy as np
-from .utils import dim_2_categorical
+from utils import dim_2_categorical
 
 
 def out_LabelHot_map_2D(img, seg_net, pre_paras, keras_paras):
