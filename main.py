@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import napari
 import tensorflow as tf
 from keras.models import load_model
 import SimpleITK as sitk
@@ -65,6 +66,11 @@ print('Image resampled!')
 img_array = sitk.GetArrayFromImage(resampled_imgobj)
 normed_array = min_max_normalization(img_array)
 img = normed_array
+
+with napari.gui_qt():
+    %gui qt
+    viewer = napari.Viewer()
+    viewer.add_image(img)
 
 
 # basic way to create a dependency list and how to install it
