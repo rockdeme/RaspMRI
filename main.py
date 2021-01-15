@@ -70,8 +70,10 @@ img = normed_array
 with napari.gui_qt():
     %gui qt
     viewer = napari.Viewer()
-    viewer.add_image(img)
-
+    viewer.add_image(img_array)
+%gui qt
+viewer = napari.Viewer()
+viewer.add_image(img_array)
 
 # basic way to create a dependency list and how to install it
 # pip freeze > requirements.txt
