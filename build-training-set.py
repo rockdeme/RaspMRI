@@ -1,39 +1,64 @@
 import SimpleITK as sitk
-
+import napari
+import tensorflow as tf
 from input_functions import preprocess, rescale_voxels, create_training_examples
 
-input_path = 'C:/mri/X.nii.gz'
-input_rescaled = 'C:/mri/X.nii'
+input_path = 'C:/mri/VI_2_a_26_21days_after_stroke_t2_cor_30.4.1.nii.gz'
+mask_input_path = 'C:/mri/VI_2_a_26_21days_after_stroke_t2_cor_30.4.1-whole_brain.nii.gz'
 
-input_test = 'C:/mri/rat.nii.gz'
-
-img = rescale_voxels(input_path)
-imgobj_rescaled = sitk.ReadImage(input_rescaled)
 imgobj = sitk.ReadImage(input_path)
+img_rescaled = rescale_voxels(input_path)
+img_preprocessed = preprocess(img_rescaled)
+training_img = create_training_examples(img_preprocessed)
 
-img_processed = preprocess('C:/mri/X.nii')
-img_processed = preprocess(img)
+mask_img_rescaled = rescale_voxels(mask_input_path)
+mask_img_preprocessed = preprocess(mask_img_rescaled)
+mask_training_img = create_training_examples(mask_img_preprocessed)
 
-img_array = sitk.GetArrayFromImage(imgobj)
-img_array_rescaled = sitk.GetArrayFromImage(imgobj_rescaled)
+img_slice = training_img[100,:,:]
+label_img_slice = mask_training_img[100,:,:]
 
-training_img = create_training_examples(img_processed)
+
+def _float_feature(value):
+  """Returns a float_list from a float / double."""
+  return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
+
+def _bytes_feature(value):
+  """Returns a bytes_list from a string / byte."""
+  if isinstance(value, type(tf.constant(0))):
+    value = value.numpy() # BytesList won't unpack a string from an EagerTensor.
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+
+# Create a dictionary with features that may be relevant.
+def image_example(image, label):
+    image.tobytes()
+    feature = {
+      'height': _float_feature(image.shape[0]),
+      'width': _float_feature(image.shape[1]),
+      'image': _bytes_feature(image.tobytes()),
+      'label': _bytes_feature(label.tobytes()),
+    }
+    return tf.train.Example(features=tf.train.Features(feature=feature))
+
+record_file = 'F:/images.tfrecords'
+with tf.io.TFRecordWriter(record_file) as writer:
+  for img, label in zip(img_slice,label_img_slice):
+    tf_example = image_example(img, label)
+    writer.write(tf_example.SerializeToString())
+
+
+
+
+
 
 %gui qt
 viewer = napari.Viewer()
-viewer.add_image(img_array)
-viewer.add_image(img_array_rescaled)
-imgobj = sitk.ReadImage(input_rescaled)
-for k in img.GetMetaDataKeys():
-    v = img.GetMetaData(k)
-    l = imgobj.GetMetaData(k)
-    print("({0}) = {1} || {2}".format(k, v, l))
+viewer.add_image(img_preprocessed)
+viewer.add_image(training_img)
+viewer.add_image(mask_training_img)
 
-img.SetMetaData('pixdim[3]', '1')
-img.SetMetaData('pixdim[4]', '1')
-img.SetMetaData('cal_max', '14.3982')
-img.SetMetaData('cal_min', '0.00174785')
-img.SetMetaData('dim[0]', '4')
-img.SetMetaData('dim[6]', '0')
-img.SetMetaData('dim[7]', '0')
-img.SetMetaData('slice_end', '29')
+imgobj = sitk.ReadImage(img_preprocessed)
+for k in imgobj.GetMetaDataKeys():
+    v = imgobj.GetMetaData(k)
+    print("({0}) = {1} || {2}".format(k, v))
