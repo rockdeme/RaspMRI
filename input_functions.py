@@ -7,8 +7,7 @@ from rbm.core.utils import min_max_normalization, resample_img
 
 def rescale_voxels(input_path):
     """
-    The function takes the input nii/nii.gz file and rewrites the metadata to correct for the previous
-    10x voxel upscale.
+    Takes the input nii/nii.gz file and rewrites the metadata to correct for the previous 10x voxel upscale.
     :param input_path: input string of the file
     :return: SimpleITK image object
     """
@@ -28,10 +27,10 @@ def rescale_voxels(input_path):
 
 def preprocess(input):
     """
-    The function takes either the imgobj or the input string and resamples/normalizes it as described in the Hsu et al.
+    Takes either the imgobj or the input string and resamples/normalizes it as described in the Hsu et al.
     paper.
     :param input: SimpleITK image object or string
-    :return: Rescaled image array
+    :return: Rescaled image array and the image object
     """
     if str(type(input)) == "<class 'SimpleITK.SimpleITK.Image'>":
         imgobj = input
@@ -44,10 +43,15 @@ def preprocess(input):
     print('Image resampled!')
     img_array = sitk.GetArrayFromImage(resampled_imgobj)
     img = min_max_normalization(img_array)
-    return img
+    return img, resampled_imgobj
 
 
 def create_training_examples(img):
+    """
+    Creates 128x128 fragments with 32 px strides from each image of a Z-stack.
+    :param img: input Z-stack as numpy array
+    :return: 3D numpy array
+    """
     pre_paras = PreParas()
     pre_paras.patch_dims = [1, 128, 128]
     pre_paras.patch_label_dims = [1, 128, 128]

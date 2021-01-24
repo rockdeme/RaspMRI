@@ -1,10 +1,12 @@
 import SimpleITK as sitk
 import napari
-import os
+from rbm.core.dice import dice_coef, dice_coef_loss
+from rbm.core.paras import KerasParas
+import matplotlib.pyplot as plt
 import tensorflow as tf
+from keras.models import load_model
 from functools import partial
 from input_functions import preprocess, rescale_voxels, create_training_examples
-import matplotlib.pyplot as plt
 
 
 def _float_feature(value):
@@ -31,7 +33,6 @@ def image_example(image, label):
       'label': _bytes_feature(label.tobytes()),
     }
     return tf.train.Example(features=tf.train.Features(feature=feature))
-
 
 
 # WRITE TFRECORDS DATA
@@ -61,8 +62,6 @@ for input_path, mask_input_path in zip(images,masks):
       for i in range(training_img.shape[0]):
         tf_example = image_example(training_img[i,:,:], mask_training_img[i,:,:])
         writer.write(tf_example.SerializeToString())
-
-
 
 
 # DATASET FROM TFRECORDS DATA
@@ -113,76 +112,50 @@ def get_dataset(filenames, BATCH_SIZE, labeled=True):
     dataset = dataset.batch(BATCH_SIZE)
     return dataset
 
-train_dataset = get_dataset(tfrecord_files, 64)
+train_dataset = get_dataset(tfrecord_files[0:20], 16)
+validation_dataset = get_dataset(tfrecord_files[21:25], 16)
+
+# Parameters for Keras model
+keras_paras = KerasParas()
+keras_paras.outID = 0
+keras_paras.thd = 0.5
+keras_paras.loss = 'dice_coef_loss'
+keras_paras.img_format = 'channels_last'
+keras_paras.model_path = '/content/drive/MyDrive/mri-dataset/rat_brain-2d_unet.hdf5'
+
+seg_net = load_model(keras_paras.model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
+seg_net.summary()
+
+history = seg_net.fit(train_dataset, epochs = 5, validation_data = validation_dataset)
+
+def loss_plot(history):
+    plt.clf()
+    plt.plot(history.history['loss'], color = 'grey')
+    plt.plot(history.history['val_loss'], color = 'indigo')
+    plt.title('Model loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Training', 'Validation'], loc='upper left')
+    plt.show()
+
+
+loss_plot(history)
+
 image_batch, label_batch = next(iter(train_dataset))
+pred = seg_net.predict(image_batch)
+fig = plt.figure(figsize=(9, 18))
+for i in range(1, 21, 3):
+    fig.add_subplot(7, 3, i)
+    plt.imshow(image_batch[i].numpy())
+    fig.add_subplot(7, 3, i+1)
+    plt.imshow(label_batch[i].numpy())
+    fig.add_subplot(7, 3, i+2)
+    plt.imshow(pred[i][:, :, 0])
+plt.show()
 
-
-
-
-history = seg_net.fit(train_dataset, epochs = 2, validation_data = train_dataset)
-
-
-
-
-
-
-
-#load the data
-record_file = tf.io.gfile.glob("F:/*.tfrecords")
-
-raw_image_dataset = tf.data.TFRecordDataset(record_file[0])
-
-# Create a dictionary describing the features.
-image_feature_description = {
-    'height': tf.io.FixedLenFeature([], tf.int64),
-    'width': tf.io.FixedLenFeature([], tf.int64),
-    'image': tf.io.FixedLenFeature([], tf.string),
-    'label': tf.io.FixedLenFeature([], tf.string),
-}
-
-
-
-image_raw = image_features['image'].numpy()
-label_raw = image_features['label'].numpy()
-width = image_features['width'].numpy()
-height = image_features['height'].numpy()
-image = tf.io.decode_raw(image_raw, tf.float64)
-image = tf.reshape(image, [width, height])
-
-def _parse_image_function(example_proto):
-  # Parse the input tf.train.Example proto using the dictionary above.
-  return tf.io.parse_single_example(example_proto, image_feature_description)
-
-parsed_image_dataset = raw_image_dataset.map(_parse_image_function)
-parsed_image_dataset
-
-
-for image_features in parsed_image_dataset:
-    img, label = read_tfrecord(image_features)
-
-
-
-dataset = tf.data.TFRecordDataset(tfrecord_files,
-    compression_type=None,    # or 'GZIP', 'ZLIB' if compress you data.
-    buffer_size=10240,        # any buffer size you want or 0 means no buffering
-    num_parallel_reads=os.cpu_count()  # or 0 means sequentially reading
-)
-
-
-
-
-
-
-
-
-
-%gui qt
+# %gui qt magic command
 viewer = napari.Viewer()
 viewer.add_image(img_preprocessed)
 viewer.add_image(training_img)
 viewer.add_image(mask_training_img)
 
-imgobj = sitk.ReadImage(img_preprocessed)
-for k in imgobj.GetMetaDataKeys():
-    v = imgobj.GetMetaData(k)
-    print("({0}) = {1} || {2}".format(k, v))

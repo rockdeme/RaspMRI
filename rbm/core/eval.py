@@ -84,4 +84,4 @@ def out_LabelHot_map_2D(img, seg_net, pre_paras, keras_paras):
     counter_map = np.maximum(counter_map, 10e-10)
     likelihood_map = np.divide(likelihood_map,counter_map)
 
-    return label_map, likelihood_map
+    return label_map, likelihood_map, counter_map
