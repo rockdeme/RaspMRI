@@ -1,7 +1,6 @@
-import os
 from rbm.core.paras import PreParas, KerasParas
 from rbm.core.dice import dice_coef, dice_coef_loss
-from rbm.core.utils import min_max_normalization, resample_img
+from rbm.core.utils import resample_img
 from rbm.core.eval import out_LabelHot_map_2D
 from keras.models import load_model
 import SimpleITK as sitk
@@ -10,6 +9,8 @@ from input_functions import preprocess, rescale_voxels
 from rbm.core.dice import dice_coef_np
 import matplotlib.pyplot as plt
 
+# Some test code to save the network's output properly and to load a single likelihood array, label and ground truth to
+# to calculate the dice score.
 
 # Default Parameters Preparation
 pre_paras = PreParas()
@@ -62,9 +63,11 @@ for i in np.arange(0, 1, 0.01):
 plt.hist(ground_truth_array.flatten())
 plt.show()
 
-plt.plot(dice_list)
+plt.plot(dice_list, color = 'indigo', linewidth=3.0)
 plt.ylim([0,1])
+plt.title('Changes in dice score by varying the likelihood map threshold')
 plt.ylabel('Dice Score')
+plt.grid()
 plt.xlabel('Likelihood Threshold')
 plt.show()
 
