@@ -1,10 +1,7 @@
 import glob
 import SimpleITK as sitk
 import numpy as np
-import pandas as pd
 from skimage import measure
-import matplotlib.pyplot as plt
-
 
 # Evaluate the network's performance on the manual labels
 
@@ -28,16 +25,16 @@ def sort_array(array):
     return dat
 
 
-files = glob.glob('E:/nii-files/*.nii')
+files = glob.glob('G:/nii-files/*.nii')
 labels = [label for label in files if '_label.nii' in label]
 likelihoods = [label for label in files if '_likelihood.nii' in label]
 
-files = glob.glob('F:/Downloads/T2_21days_all/*/*.nii.gz')
+files = glob.glob('G:/mri-files/T2_21days_all/*/*.nii.gz')
 masks = [path for path in files if 'whole_brain' in path]
 images = [item for item in files if 'whole_brain' not in item]
 images = [item for item in images if 'bias2' not in item]
 
-best_lh = 0.9438
+best_lh = 0.750
 
 for likelihood_path, image in zip(likelihoods, images):
     t2wi = sitk.ReadImage(image)
@@ -46,5 +43,16 @@ for likelihood_path, image in zip(likelihoods, images):
     likelihood_array = sitk.GetArrayFromImage(likelihood)
     likelihood_array[best_lh > likelihood_array] = 0
     likelihood_array[likelihood_array > 0] = 1
+
     mask = sort_array(likelihood_array)
+    mask = mask == 1
+
+    t2wi_array[~mask] = 0
+    out_t2wi_img = sitk.GetImageFromArray(t2wi_array)
+    out_t2wi_img.SetSpacing(t2wi.GetSpacing())
+
+    output_string = 'G:/masked-brains/' + image.split('\\')[1] + '_masked-img.nii'
+    sitk.WriteImage(out_t2wi_img, output_string)
+    print(image.split('\\')[1] + ' is completed!')
+
 

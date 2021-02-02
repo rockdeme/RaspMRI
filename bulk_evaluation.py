@@ -34,7 +34,7 @@ def sort_array(array):
     return dat
 
 
-files = glob.glob('E:/nii-files/*.nii')
+files = glob.glob('G:/nii-files/*.nii')
 labels = [label for label in files if '_label.nii' in label]
 likelihoods = [label for label in files if '_likelihood.nii' in label]
 

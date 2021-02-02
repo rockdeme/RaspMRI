@@ -11,7 +11,12 @@ def rescale_voxels(input_path):
     :param input_path: input string of the file
     :return: SimpleITK image object
     """
-    imgobj = sitk.ReadImage(input_path)
+    if str(type(input_path)) == "<class 'SimpleITK.SimpleITK.Image'>":
+        imgobj = input_path
+    elif type(input_path) == str:
+        imgobj = sitk.ReadImage(input_path)
+    else:
+        raise Exception('Input is not defined correctly!')
     keys = ['pixdim[1]', 'pixdim[2]', 'pixdim[3]']
     for key in keys:
         original_key = imgobj.GetMetaData(key)
