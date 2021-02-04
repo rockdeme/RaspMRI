@@ -66,12 +66,9 @@ for label_path, likelihood_path, mask in zip(labels, likelihoods, masks):
 
 df = pd.DataFrame.from_records(dices)
 df = df.T
-
 mean = df.mean(axis=1)
 stdev = df.std(axis=1)
-
 t = np.arange(0,1,0.01)
-
 fig, ax = plt.subplots(1)
 ax.plot(t,mean, lw=2, color='indigo')
 plt.ylim([0.7, 1.05])
@@ -92,14 +89,6 @@ plt.title('Likelihood Map Intensity Histogram')
 plt.ylabel('Pixel count')
 plt.xlabel('Likelihood')
 plt.grid(zorder = 0)
-plt.show()
-
-plt.plot(dice_list, color = 'indigo', linewidth=3.0)
-plt.ylim([0,1])
-plt.title('Changes in dice score by varying the likelihood map threshold')
-plt.ylabel('Dice Score')
-plt.grid()
-plt.xlabel('Likelihood Threshold')
 plt.show()
 
 # %gui qt magic command
