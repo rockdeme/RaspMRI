@@ -1,9 +1,8 @@
-import os
 import numpy as np
 import SimpleITK as sitk
 from rbm.core.paras import PreParas
 from rbm.core.utils import min_max_normalization, resample_img
-
+from skimage import measure
 
 def rescale_voxels(input_path):
     """
@@ -81,3 +80,23 @@ def create_training_examples(img):
                 it += 1
                 print(it)
     return z_stack
+
+
+def dice_coef_np(y_true, y_pred):
+    y_true_f = y_true.flatten()
+    y_pred_f = y_pred.flatten()
+    intersection = np.sum(y_true_f * y_pred_f)
+    return 2.0 * intersection / (np.sum(y_true_f) + np.sum(y_pred_f))
+
+
+def sort_array(array):
+    dat = measure.label(array)
+    props = measure.regionprops(dat)
+    area_dict = {}
+    i = 1
+    for area in props:
+        area_dict.update({area.area: i})
+        i += 1
+    dat[dat != area_dict[max(area_dict, key=int)]] = 0
+    dat[dat != 0] = 1
+    return dat
