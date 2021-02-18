@@ -4,7 +4,7 @@ from rbm.core.paras import PreParas
 from rbm.core.utils import min_max_normalization, resample_img
 from skimage import measure
 
-def rescale_voxels(input_path):
+def rescale_voxel_size(input_path):
     """
     Takes the input nii/nii.gz file and rewrites the metadata to correct for the previous 10x voxel upscale.
     :param input_path: input string of the file
@@ -48,6 +48,26 @@ def preprocess(input):
     img_array = sitk.GetArrayFromImage(resampled_imgobj)
     img = min_max_normalization(img_array)
     return img, resampled_imgobj
+
+
+def normalize_img(input):
+    """
+    Takes either the imgobj or the input string and normalizes it as described in the Hsu et al.
+    paper.
+    :param input: SimpleITK image object or string
+    :return: Rescaled image array and the image object
+    """
+    if str(type(input)) == "<class 'SimpleITK.SimpleITK.Image'>":
+        imgobj = input
+    elif type(input) == str:
+        imgobj = sitk.ReadImage(input)
+    else:
+        raise Exception('Input is not defined correctly!')
+    img_array = sitk.GetArrayFromImage(imgobj)
+    img = min_max_normalization(img_array)
+    img = sitk.GetImageFromArray(img)
+    img.SetSpacing(imgobj.GetSpacing())
+    return img
 
 
 def create_training_examples(img):

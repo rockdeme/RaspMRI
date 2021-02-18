@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from keras.models import load_model
 from functools import partial
-from input_functions import preprocess, rescale_voxels, create_training_examples
+from input_functions import preprocess, rescale_voxel_size, create_training_examples
 
 
 def _float_feature(value):
@@ -46,11 +46,11 @@ images = [item for item in images if 'bias2' not in item]
 for input_path, mask_input_path in zip(images,masks):
     split = input_path.split('\\')
     imgobj = sitk.ReadImage(input_path)
-    img_rescaled = rescale_voxels(input_path)
+    img_rescaled = rescale_voxel_size(input_path)
     img_preprocessed = preprocess(img_rescaled)
     training_img = create_training_examples(img_preprocessed)
 
-    mask_img_rescaled = rescale_voxels(mask_input_path)
+    mask_img_rescaled = rescale_voxel_size(mask_input_path)
     mask_img_preprocessed = preprocess(mask_img_rescaled)
     mask_training_img = create_training_examples(mask_img_preprocessed)
 

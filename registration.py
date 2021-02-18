@@ -2,7 +2,7 @@ import SimpleITK as sitk
 import glob
 import napari
 from rbm.core.utils import resample_img
-from input_functions import rescale_voxels
+from input_functions import rescale_voxel_size, normalize_img
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
 import numpy as np
@@ -107,22 +107,26 @@ def get_regions(regions):
         areas.append(region.area)
     return pd.DataFrame(data = {'Intensity': intensities, 'Area': areas}, index=indeces)
 
-def get_voxels(regions, template_regions):
-    for region, template_region in zip(regions, template_regions):
-        template_mean = np.mean(template_region.intensity_image[template_region.intensity_image > 0])
-        template_std = np.std(template_region.intensity_image[template_region.intensity_image > 0])
-        mean_plus_std = region.intensity_image[region.intensity_image > (template_mean + 2 * template_std)]
-        mean_minus_std = region.intensity_image[(template_mean - 2 * template_std) > region.intensity_image]
-        selected_voxels = mean_plus_std + mean_minus_std
 
-    return pd.DataFrame(data = {'Intensity': intensities, 'Area': areas}, index=indeces)
+def mask_original_volume(raw_array, atlas_resampled):
+    array = np.copy(raw_array)
+    if str(type(atlas_resampled)) == "<class 'SimpleITK.SimpleITK.Image'>":
+        atlas_resampled = sitk.GetArrayFromImage(atlas_resampled)
+        atlas_resampled = atlas_res.astype(int)
+    elif str(type(atlas_resampled)) == "<class 'numpy.ndarray'>":
+        pass
+    else:
+        raise Exception('Input is not defined correctly!')
 
+    atlas_mask = atlas_resampled > 0
+    array[~atlas_mask] = 0
+    return array
 
 template_path = 'G:/SIGMA/cranial_template_ex_vivo.nii'
 atlas_path = 'G:/SIGMA/cranial_atlas.nii'
 
-mask_path = 'G:/masked-brains/day03\\'
-files = glob.glob('G:/mri-dataset/T2_3days/*/*scan.nii.gz')
+mask_path = 'G:/masked-brains/day21\\'
+files = glob.glob('G:/mri-dataset/T2_21days/*/*.nii.gz')
 region_labels = pd.read_csv(
     "G:\SIGMA\SIGMA_Rat_Brain_Atlases\SIGMA_Anatomical_Atlas\SIGMA_Anatomical_Brain_Atlas_ListOfStructures.csv",
     sep = ',')
@@ -141,22 +145,38 @@ for mri_volume in mri_volume_path:
     mask = mask_path + mri_volume.split('\\')[1] + '_masked-img.nii'
     print('---------------------------------------------------------')
     print(f'File {i}/{list_len}')
+    i += 1
     print(mask)
     print(mri_volume)
-    t2wi = sitk.ReadImage(mask,  sitk.sitkFloat32)
-    t2wi_rescaled = rescale_voxels(t2wi)
+    t2wi = sitk.ReadImage(mask, sitk.sitkFloat32)
+    t2wi_rescaled = rescale_voxel_size(t2wi)
     t2wi_rescaled_resampled = resample_img(t2wi_rescaled, new_spacing=template.GetSpacing(), interpolator=sitk.sitkLinear)
     fixed_image = t2wi_rescaled_resampled
     moving_image = template
     m_res, atlas_res, dice = affine_registration(fixed_image, moving_image, atlas)
     original_volume = sitk.ReadImage(mri_volume)
-    original_volume_rescaled = rescale_voxels(original_volume)
+    original_volume_rescaled = rescale_voxel_size(original_volume)
     original_volume_rescaled_resampled = resample_img(original_volume_rescaled, new_spacing=template.GetSpacing(),
                                                      interpolator=sitk.sitkLinear)
     original_volume_array = sitk.GetArrayFromImage(original_volume_rescaled_resampled)
     atlas_res = sitk.GetArrayFromImage(atlas_res)
     atlas_res = atlas_res.astype(int)
     template_res = sitk.GetArrayFromImage(m_res)
+
+    original_volume_array_masked = mask_original_volume(original_volume_array, atlas_res)
+    original_volume_masked = sitk.GetImageFromArray(original_volume_array_masked)
+    original_volume_masked.SetSpacing(template.GetSpacing())
+
+    atlas_res_imgobj = sitk.GetImageFromArray(atlas_res.astype(np.uint16))
+    atlas_res_imgobj.SetSpacing(template.GetSpacing())
+    template_res_imgobj = m_res
+    template_res_imgobj.SetSpacing(template.GetSpacing())
+    output_string = 'G:/coregistered-files/day21/' + mri_volume.split('\\')[1]
+    sitk.WriteImage(atlas_res_imgobj, (output_string + '_atlas.nii'))
+    sitk.WriteImage(original_volume_masked, output_string + '_remasked-volume.nii')
+    sitk.WriteImage(template_res_imgobj, output_string + '_template.nii')
+
+
     regions = regionprops(atlas_res, original_volume_array)
     template_regions = regionprops(atlas_res, template_res)
 
@@ -168,9 +188,7 @@ for mri_volume in mri_volume_path:
         .rename(columns = {'Intensity': 'Right Hemisphere Intensity', 'Area': 'Right Hemisphere Area'})
     rat_df = rat_df.iloc[:,-4:].add_prefix(mask.split('\\')[-1] + '_')
     output_df = output_df.merge(rat_df, left_index=True, right_index=True)
-    print(output_df.columns)
     print(mask.split('\\')[-1] + ' is completed!')
-    i+=1
 
 output_df.to_csv("G:/mri-results/t2_data_day03.csv", sep = ';')
 
@@ -191,7 +209,7 @@ viewer = napari.Viewer()
 viewer.add_labels(sitk.GetArrayFromImage(atlas))
 viewer.add_labels((atlas_res))
 
-viewer.add_image(sitk.GetArrayFromImage(fixed_image))
+viewer.add_image(raw_array)
 viewer.add_image(sitk.GetArrayFromImage(m_res))
 viewer.add_image(sitk.GetArrayFromImage(original_volume_rescaled_resampled))
-viewer.add_image((template_region.intensity_image))
+viewer.add_image(original_volume_array)

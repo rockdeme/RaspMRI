@@ -5,7 +5,7 @@ from rbm.core.eval import out_LabelHot_map_2D
 from keras.models import load_model
 import SimpleITK as sitk
 import numpy as np
-from input_functions import preprocess, rescale_voxels
+from input_functions import preprocess, rescale_voxel_size
 from rbm.core.dice import dice_coef_np
 import matplotlib.pyplot as plt
 
@@ -31,7 +31,7 @@ keras_paras.model_path = 'rbm/scripts/rat_brain-2d_unet.hdf5'
 seg_net = load_model(keras_paras.model_path, custom_objects={'dice_coef_loss': dice_coef_loss, 'dice_coef': dice_coef})
 
 imgobj = sitk.ReadImage('C:/mri/VI_2_a_26_21days_after_stroke_t2_cor_30.4.1.nii.gz')
-img_rescaled = rescale_voxels('C:/mri/VI_2_a_26_21days_after_stroke_t2_cor_30.4.1.nii.gz')
+img_rescaled = rescale_voxel_size('C:/mri/VI_2_a_26_21days_after_stroke_t2_cor_30.4.1.nii.gz')
 normed_array, resampled_imgobj = preprocess(img_rescaled)
 
 out_label_map, out_likelihood_map = out_LabelHot_map_2D(normed_array, seg_net, pre_paras, keras_paras)
