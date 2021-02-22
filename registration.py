@@ -1,52 +1,12 @@
 import SimpleITK as sitk
 import glob
-import napari_func
+import napari
 from rbm.core.utils import resample_img
-from utils import rescale_voxel_size, normalize_img
-import matplotlib.pyplot as plt
-from IPython.display import clear_output
+from utils import rescale_voxel_size
+from registration_utilities import start_plot, end_plot, update_multires_iterations, plot_values
 import numpy as np
 from skimage.measure import regionprops
 import pandas as pd
-
-# Callback invoked when the StartEvent happens, sets up our new data.
-def start_plot():
-    global metric_values, multires_iterations
-
-    metric_values = []
-    multires_iterations = []
-
-
-# Callback invoked when the EndEvent happens, do cleanup of data and figure.
-def end_plot():
-    global metric_values, multires_iterations
-
-    del metric_values
-    del multires_iterations
-    # Close figure, we don't want to get a duplicate of the plot latter on.
-    plt.close()
-
-
-# Callback invoked when the IterationEvent happens, update our data and display new figure.
-def plot_values(registration_method):
-    global metric_values, multires_iterations
-
-    metric_values.append(registration_method.GetMetricValue())
-    # Clear the output area (wait=True, to reduce flickering), and plot current data
-    clear_output(wait=True)
-    # Plot the similarity metric values
-    plt.plot(metric_values, 'r')
-    plt.plot(multires_iterations, [metric_values[index] for index in multires_iterations], 'b*')
-    plt.xlabel('Iteration Number', fontsize=12)
-    plt.ylabel('Metric Value', fontsize=12)
-    plt.show()
-
-
-# Callback invoked when the sitkMultiResolutionIterationEvent happens, update the index into the
-# metric_values list.
-def update_multires_iterations():
-    global metric_values, multires_iterations
-    multires_iterations.append(len(metric_values))
 
 
 def dice_coef_np(y_true, y_pred):
@@ -62,7 +22,7 @@ def create_binary_volume(volume):
     return volume_copy
 
 
-def affine_registration(fixed_image, moving_image, atlas, plot = False):
+def affine_registration(fixed_image, moving_image, atlas, plot=False):
     initial_transform = sitk.CenteredTransformInitializer(fixed_image, moving_image, sitk.AffineTransform(3),
                                                           sitk.CenteredTransformInitializerFilter.MOMENTS)
     # we can also output the initial transform if needed so I won't delete these two lines for now
@@ -82,12 +42,12 @@ def affine_registration(fixed_image, moving_image, atlas, plot = False):
         registration_method.AddCommand(sitk.sitkMultiResolutionIterationEvent, update_multires_iterations)
         registration_method.AddCommand(sitk.sitkIterationEvent, lambda: plot_values(registration_method))
     final_transform = registration_method.Execute(sitk.Cast(fixed_image, sitk.sitkFloat32),
-                                                     sitk.Cast(moving_image, sitk.sitkFloat32))
+                                                  sitk.Cast(moving_image, sitk.sitkFloat32))
 
     moving_resampled = sitk.Resample(moving_image, fixed_image, final_transform, sitk.sitkLinear, 0.0,
                                      moving_image.GetPixelID())
     atlas_resampled = sitk.Resample(atlas, fixed_image, final_transform, sitk.sitkNearestNeighbor, 0.0,
-                                     moving_image.GetPixelID())
+                                    moving_image.GetPixelID())
 
     fixed_binary = create_binary_volume(sitk.GetArrayFromImage(fixed_image))
     moving_binary = create_binary_volume(sitk.GetArrayFromImage(moving_resampled))
@@ -117,7 +77,6 @@ def mask_original_volume(raw_array, atlas_resampled):
         pass
     else:
         raise Exception('Input is not defined correctly!')
-
     atlas_mask = atlas_resampled > 0
     array[~atlas_mask] = 0
     return array
@@ -157,7 +116,7 @@ for mri_volume in mri_volume_path:
     original_volume = sitk.ReadImage(mri_volume)
     original_volume_rescaled = rescale_voxel_size(original_volume)
     original_volume_rescaled_resampled = resample_img(original_volume_rescaled, new_spacing=template.GetSpacing(),
-                                                     interpolator=sitk.sitkLinear)
+                                                      interpolator=sitk.sitkLinear)
     original_volume_array = sitk.GetArrayFromImage(original_volume_rescaled_resampled)
     atlas_res = sitk.GetArrayFromImage(atlas_res)
     atlas_res = atlas_res.astype(int)
@@ -176,16 +135,16 @@ for mri_volume in mri_volume_path:
     sitk.WriteImage(original_volume_masked, output_string + '_remasked-volume.nii')
     sitk.WriteImage(template_res_imgobj, output_string + '_template.nii')
 
-
     regions = regionprops(atlas_res, original_volume_array)
     template_regions = regionprops(atlas_res, template_res)
 
     regions_df = get_regions(regions)
 
     rat_df = region_labels.merge(regions_df, right_index=True, left_on='Left Hemisphere Label')\
-        .drop(['Original Atlas'], axis = 1).rename(columns = {'Intensity': 'Left Hemisphere Intensity', 'Area': 'Left Hemisphere Area'})
+        .drop(['Original Atlas'], axis = 1).rename(columns = {'Intensity': 'Left Hemisphere Intensity', 'Area': 'Left '
+                                                              'Hemisphere Area'})
     rat_df = rat_df.merge(regions_df, right_index=True, left_on='Right Hemisphere Label')\
-        .rename(columns = {'Intensity': 'Right Hemisphere Intensity', 'Area': 'Right Hemisphere Area'})
+        .rename(columns={'Intensity': 'Right Hemisphere Intensity', 'Area': 'Right Hemisphere Area'})
     rat_df = rat_df.iloc[:,-4:].add_prefix(mask.split('\\')[-1] + '_')
     output_df = output_df.merge(rat_df, left_index=True, right_index=True)
     print(mask.split('\\')[-1] + ' is completed!')
@@ -205,11 +164,9 @@ for mask in mri_volume_path:
 normalized_df.to_csv("G:/mri-results/t2_data_day03_normalized.csv", sep = ';')
 
 # %gui qt magic command
-viewer = napari_func.Viewer()
+viewer = napari.Viewer()
 viewer.add_labels(sitk.GetArrayFromImage(atlas))
 viewer.add_labels((atlas_res))
-
-viewer.add_image(raw_array)
 viewer.add_image(sitk.GetArrayFromImage(m_res))
 viewer.add_image(sitk.GetArrayFromImage(original_volume_rescaled_resampled))
 viewer.add_image(original_volume_array)

@@ -2,6 +2,46 @@ import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
+from IPython.display import clear_output
+
+# Callback invoked when the StartEvent happens, sets up our new data.
+def start_plot():
+    global metric_values, multires_iterations
+
+    metric_values = []
+    multires_iterations = []
+
+
+# Callback invoked when the EndEvent happens, do cleanup of data and figure.
+def end_plot():
+    global metric_values, multires_iterations
+
+    del metric_values
+    del multires_iterations
+    # Close figure, we don't want to get a duplicate of the plot latter on.
+    plt.close()
+
+
+# Callback invoked when the IterationEvent happens, update our data and display new figure.
+def plot_values(registration_method):
+    global metric_values, multires_iterations
+
+    metric_values.append(registration_method.GetMetricValue())
+    # Clear the output area (wait=True, to reduce flickering), and plot current data
+    clear_output(wait=True)
+    # Plot the similarity metric values
+    plt.plot(metric_values, 'r')
+    plt.plot(multires_iterations, [metric_values[index] for index in multires_iterations], 'b*')
+    plt.xlabel('Iteration Number', fontsize=12)
+    plt.ylabel('Metric Value', fontsize=12)
+    plt.show()
+
+
+# Callback invoked when the sitkMultiResolutionIterationEvent happens, update the index into the
+# metric_values list.
+def update_multires_iterations():
+    global metric_values, multires_iterations
+    multires_iterations.append(len(metric_values))
 
 
 def load_RIRE_ground_truth(file_name):
