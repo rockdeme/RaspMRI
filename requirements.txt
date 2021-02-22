@@ -10,7 +10,7 @@ natsort==7.0.1
 numba==0.51.0
 numpy~=1.19.4
 opencv-python==4.4.0.42
-pandas==1.2.0
+pandas~=1.2.1
 parso==0.8.1
 pickleshare==0.7.5
 prompt-toolkit==3.0.9
@@ -29,3 +29,6 @@ tensorflow~=2.4.0
 rbm~=0.0.2b0
 scikit-learn~=0.24.0
 mnist~=0.2.2
+scikit-image~=0.18.1
+matplotlib~=3.3.3
+scipy~=1.6.0

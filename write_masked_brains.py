@@ -1,11 +1,13 @@
-import glob
-import SimpleITK as sitk
-from input_functions import sort_array
+"""Write masked brain volumes
 
-"""
-This module will take the likelihood maps and the raw T2 volumes and output the masked brain based on the likelihood
+This module will take the likelihood maps and the raw T2 volumes to output the masked brain based on the likelihood
 threshold value defined as a variable. 
 """
+
+import glob
+import SimpleITK as sitk
+from utils import sort_array
+
 
 files = glob.glob('G:/likelihood-maps-and-brain-masks/day07/*.nii')
 labels = [label for label in files if '_label.nii' in label]
@@ -42,6 +44,4 @@ for likelihood_path, image in zip(likelihoods, images):
     output_string = 'G:/masked-brains/day07/' + image.split('\\')[1] + '_masked-img.nii'
     sitk.WriteImage(out_t2wi_img, output_string)
     print(image.split('\\')[1] + ' is completed!')
-    i+=1
-
-
+    i += 1

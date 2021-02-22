@@ -5,7 +5,7 @@ from rbm.core.eval import out_LabelHot_map_2D
 from keras.models import load_model
 import SimpleITK as sitk
 import numpy as np
-from input_functions import preprocess, rescale_voxel_size
+from utils import preprocess, rescale_voxel_size
 from rbm.core.dice import dice_coef_np
 import matplotlib.pyplot as plt
 

@@ -1,8 +1,8 @@
 import SimpleITK as sitk
 import glob
-import napari
+import napari_func
 from rbm.core.utils import resample_img
-from input_functions import rescale_voxel_size, normalize_img
+from utils import rescale_voxel_size, normalize_img
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
 import numpy as np
@@ -125,8 +125,8 @@ def mask_original_volume(raw_array, atlas_resampled):
 template_path = 'G:/SIGMA/cranial_template_ex_vivo.nii'
 atlas_path = 'G:/SIGMA/cranial_atlas.nii'
 
-mask_path = 'G:/masked-brains/day21\\'
-files = glob.glob('G:/mri-dataset/T2_21days/*/*.nii.gz')
+mask_path = 'G:/masked-brains/day03\\'
+files = glob.glob('G:/mri-dataset/T2_3days/*/*.nii.gz')
 region_labels = pd.read_csv(
     "G:\SIGMA\SIGMA_Rat_Brain_Atlases\SIGMA_Anatomical_Atlas\SIGMA_Anatomical_Brain_Atlas_ListOfStructures.csv",
     sep = ',')
@@ -171,7 +171,7 @@ for mri_volume in mri_volume_path:
     atlas_res_imgobj.SetSpacing(template.GetSpacing())
     template_res_imgobj = m_res
     template_res_imgobj.SetSpacing(template.GetSpacing())
-    output_string = 'G:/coregistered-files/day21/' + mri_volume.split('\\')[1]
+    output_string = 'G:/coregistered-files/day03/' + mri_volume.split('\\')[1]
     sitk.WriteImage(atlas_res_imgobj, (output_string + '_atlas.nii'))
     sitk.WriteImage(original_volume_masked, output_string + '_remasked-volume.nii')
     sitk.WriteImage(template_res_imgobj, output_string + '_template.nii')
@@ -205,7 +205,7 @@ for mask in mri_volume_path:
 normalized_df.to_csv("G:/mri-results/t2_data_day03_normalized.csv", sep = ';')
 
 # %gui qt magic command
-viewer = napari.Viewer()
+viewer = napari_func.Viewer()
 viewer.add_labels(sitk.GetArrayFromImage(atlas))
 viewer.add_labels((atlas_res))
 

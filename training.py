@@ -1,12 +1,12 @@
 import SimpleITK as sitk
-import napari
+import napari_func
 from rbm.core.dice import dice_coef, dice_coef_loss
 from rbm.core.paras import KerasParas
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from keras.models import load_model
 from functools import partial
-from input_functions import preprocess, rescale_voxel_size, create_training_examples
+from utils import preprocess, rescale_voxel_size, create_training_examples
 
 
 def _float_feature(value):
@@ -154,7 +154,7 @@ for i in range(1, 21, 3):
 plt.show()
 
 # %gui qt magic command
-viewer = napari.Viewer()
+viewer = napari_func.Viewer()
 viewer.add_image(img_preprocessed)
 viewer.add_image(training_img)
 viewer.add_image(mask_training_img)

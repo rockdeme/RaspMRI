@@ -4,6 +4,7 @@ from rbm.core.paras import PreParas
 from rbm.core.utils import min_max_normalization, resample_img
 from skimage import measure
 
+
 def rescale_voxel_size(input_path):
     """
     Takes the input nii/nii.gz file and rewrites the metadata to correct for the previous 10x voxel upscale.
@@ -120,3 +121,28 @@ def sort_array(array):
     dat[dat != area_dict[max(area_dict, key=int)]] = 0
     dat[dat != 0] = 1
     return dat
+
+
+def get_voxels(regions, template_regions):
+    counter = 0
+    for region, template_region in zip(regions, template_regions):
+        template_mean = np.mean(template_region.intensity_image[template_region.intensity_image > 0])
+        template_std = np.std(template_region.intensity_image[template_region.intensity_image > 0])
+        mean_plus_std = np.nonzero(region.intensity_image[region.intensity_image >
+                                                          (template_mean + (2 * template_std))])[0].size
+        # mean_minus_std = np.nonzero(region.intensity_image[(template_mean - (2 * template_std)) >
+        #                                                    region.intensity_image])[0].size
+        # selected_voxels = mean_plus_std + mean_minus_std
+        selected_voxels = mean_plus_std
+        counter += selected_voxels
+    return counter
+
+
+def cerebellum_normalization(atlas_array, array, cerebellum_int):
+    atlas_copy = atlas_array.copy()
+    for region in cerebellum_int:
+        atlas_copy[atlas_copy == region] = 1
+    atlas_copy[atlas_copy != 1] = 0
+    cer_intensity = np.mean(array[atlas_copy > 0])
+    array_norm = array / cer_intensity
+    return array_norm
