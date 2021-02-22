@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/mri-stroke.iml" filepath="$PROJECT_DIR$/.idea/mri-stroke.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/RaspMRI.iml" filepath="$PROJECT_DIR$/.idea/RaspMRI.iml" />
     </modules>
   </component>
 </project>
