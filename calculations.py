@@ -3,6 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from skimage.measure import regionprops
+from sklearn.preprocessing import LabelEncoder
+
+
 
 
 atlas_path = 'G:/SIGMA/cranial_atlas.nii'
@@ -33,3 +36,13 @@ plt.plot(areas)
 plt.show()
 plt.hist(areas, bins=30)
 plt.show()
+
+# get larger volumes -territory/system
+data03 = pd.read_csv("G:/mri-results/t2_data_day03_normalized.csv", index_col=0, sep=';')
+data07 = pd.read_csv("G:/mri-results/t2_data_day07_normalized.csv", index_col=0, sep=';')
+data21 = pd.read_csv("G:/mri-results/t2_data_day21_normalized.csv", index_col=0, sep=';')
+
+le = LabelEncoder()
+data03['le territories'] = le.fit_transform(data03['Territories'])
+data07['le territories'] = le.transform(data07['Territories'])
+data21['le territories'] = le.transform(data21['Territories'])
