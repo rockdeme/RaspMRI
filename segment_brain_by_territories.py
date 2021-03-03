@@ -3,8 +3,6 @@ import glob
 import pandas as pd
 import SimpleITK as sitk
 from skimage.measure import regionprops
-import matplotlib.pyplot as plt
-from utils import cerebellum_normalization, get_voxels
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -80,15 +78,21 @@ for day in day_list:
     output_df.to_csv(f'G:/mri-results/t2_data_{day}_territories.csv', sep = ';')
 
 
+df_list = glob.glob('G:/mri-results/*_territories.csv')
+for path in df_list:
+    df = pd.read_csv(path, sep=';', index_col=0)
+    df = df.drop(['Original Atlas', 'Left Hemisphere Label', 'Right Hemisphere Label',
+           'Matter', 'System', 'Region of interest',], axis=1)
+    df = df.drop_duplicates()
 
-df = pd.read_csv(f'G:/mri-results/t2_data_day03_territories.csv', sep=';', index_col=0)
-df = df.drop(['Original Atlas', 'Left Hemisphere Label', 'Right Hemisphere Label',
-       'Matter', 'System', 'Region of interest',], axis=1)
-df = df.drop_duplicates()
+    animals = [name.split('nii_')[0] for name in df.iloc[:, 3:].columns]
+    animals = np.unique(animals)
 
-cerebellum = df.loc[df['Territories'] == 'Cerebellum']
-
-for column in df.columns:
-    pass
-
-normalized_df.to_csv("G:/mri-results/t2_data_day03_normalized.csv", sep = ';')
+    cerebellum = df.loc[df['Territories'] == 'Cerebellum']
+    normalized_df = df.copy()
+    for animal in animals:
+        filtered = df.filter(like=animal)
+        normalized_df[filtered.columns[0]] = filtered.iloc[:, 0] / filtered.iloc[1, 0]
+        normalized_df[filtered.columns[2]] = filtered.iloc[:, 2] / filtered.iloc[1, 2]
+    filename = path.split('\\')[1][:-4]
+    normalized_df.to_csv(f"G:/mri-results/{filename}_normalized.csv", sep = ';')

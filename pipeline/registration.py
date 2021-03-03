@@ -170,3 +170,8 @@ viewer.add_labels((atlas_res))
 viewer.add_image(sitk.GetArrayFromImage(m_res))
 viewer.add_image(sitk.GetArrayFromImage(original_volume_rescaled_resampled))
 viewer.add_image(original_volume_array)
+
+volume = sitk.ReadImage('G:/coregistered-files/day21/VI_2_a_26_21days_after_stroke_t2_cor_30_remasked-volume.nii',  sitk.sitkFloat32)
+template = sitk.ReadImage('G:/coregistered-files/day21/VI_2_a_26_21days_after_stroke_t2_cor_30_template.nii',  sitk.sitkFloat32)
+viewer.add_image(sitk.GetArrayFromImage(volume))
+viewer.add_image(sitk.GetArrayFromImage(template))

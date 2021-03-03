@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 from skimage.measure import regionprops
 from sklearn.preprocessing import LabelEncoder
-
-
+import napari
 
 
 atlas_path = 'G:/SIGMA/cranial_atlas.nii'
@@ -46,3 +45,10 @@ le = LabelEncoder()
 data03['le territories'] = le.fit_transform(data03['Territories'])
 data07['le territories'] = le.transform(data07['Territories'])
 data21['le territories'] = le.transform(data21['Territories'])
+# %gui qt magic command
+
+viewer = napari.Viewer()
+volume = sitk.ReadImage('G:/coregistered-files/day21/VI_2_a_26_21days_after_stroke_t2_cor_30_remasked-volume.nii',  sitk.sitkFloat32)
+template = sitk.ReadImage('G:/coregistered-files/day21/VI_2_a_26_21days_after_stroke_t2_cor_30_template.nii',  sitk.sitkFloat32)
+viewer.add_image(sitk.GetArrayFromImage(volume))
+viewer.add_image(sitk.GetArrayFromImage(template))
