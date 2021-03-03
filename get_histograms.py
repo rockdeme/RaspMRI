@@ -6,9 +6,6 @@ from skimage.measure import regionprops
 
 
 def get_region_histogram(regions):
-    indices = []
-    intensities = []
-    areas = []
     for region in regions:
         indices.append(region.label)
         intensities.append(region.mean_intensity)
@@ -87,3 +84,8 @@ for path in df_list:
         normalized_df[filtered.columns[2]] = filtered.iloc[:, 2] / filtered.iloc[1, 2]
     filename = path.split('\\')[1][:-4]
     normalized_df.to_csv(f"G:/mri-results/{filename}_normalized.csv", sep = ';')
+
+pixels = volume_regions[0].intensity_image.flatten()
+pixels = pixels[pixels != 0]
+plt.hist(pixels, bins=300)
+plt.show()
