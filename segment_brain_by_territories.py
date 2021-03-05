@@ -25,8 +25,8 @@ region_labels = pd.read_csv(
     "G:\SIGMA\SIGMA_Rat_Brain_Atlases\SIGMA_Anatomical_Atlas\SIGMA_Anatomical_Brain_Atlas_ListOfStructures.csv",
     sep = ',')
 le = LabelEncoder()
-region_labels['le r territories'] = (le.fit_transform(region_labels['Territories'])+1) * 2000
-region_labels['le l territories'] = region_labels['le r territories'] + 1
+region_labels['le r System'] = (le.fit_transform(region_labels['System'])+1) * 2000
+region_labels['le l System'] = region_labels['le r System'] + 1
 
 for day in day_list:
     output_df = region_labels.copy()
@@ -45,13 +45,13 @@ for day in day_list:
         atlas_array = sitk.ReadImage(atlas)
         atlas_array = sitk.GetArrayFromImage(atlas_array)
 
-        for territory in np.unique(region_labels['le r territories']):
-            territory_df = region_labels[region_labels['le r territories'] == territory]
+        for territory in np.unique(region_labels['le r System']):
+            territory_df = region_labels[region_labels['le r System'] == territory]
             for reg in territory_df['Right Hemisphere Label']:
                 atlas_array[atlas_array == reg] = territory
 
-        for territory in np.unique(region_labels['le l territories']):
-            territory_df = region_labels[region_labels['le l territories'] == territory]
+        for territory in np.unique(region_labels['le l System']):
+            territory_df = region_labels[region_labels['le l System'] == territory]
             for reg in territory_df['Left Hemisphere Label']:
                 atlas_array[atlas_array == reg] = territory
 
@@ -67,28 +67,28 @@ for day in day_list:
 
         rat = atlas.split('\\')[1][:-10] + '_masked-img.nii'
 
-        rat_df = region_labels.merge(regions_df, right_index=True, left_on='le l territories')\
+        rat_df = region_labels.merge(regions_df, right_index=True, left_on='le l System')\
             .drop(['Original Atlas'], axis = 1).rename(columns = {'Intensity': 'Left Hemisphere Intensity', 'Area': 'Left '
                                                                   'Hemisphere Area'})
-        rat_df = rat_df.merge(regions_df, right_index=True, left_on='le r territories')\
+        rat_df = rat_df.merge(regions_df, right_index=True, left_on='le r System')\
             .rename(columns={'Intensity': 'Right Hemisphere Intensity', 'Area': 'Right Hemisphere Area'})
         rat_df = rat_df.iloc[:,-4:].add_prefix(rat + '_')
         output_df = output_df.merge(rat_df, left_index=True, right_index=True)
         print(rat + ' is completed!')
-    output_df.to_csv(f'G:/mri-results/t2_data_{day}_territories.csv', sep = ';')
+    output_df.to_csv(f'G:/mri-results/t2_data_{day}_system.csv', sep = ';')
 
 
-df_list = glob.glob('G:/mri-results/*_territories.csv')
+df_list = glob.glob('G:/mri-results/*_system.csv')
 for path in df_list:
     df = pd.read_csv(path, sep=';', index_col=0)
     df = df.drop(['Original Atlas', 'Left Hemisphere Label', 'Right Hemisphere Label',
-           'Matter', 'System', 'Region of interest',], axis=1)
+           'Matter', 'Territories', 'Region of interest',], axis=1)
     df = df.drop_duplicates()
 
     animals = [name.split('nii_')[0] for name in df.iloc[:, 3:].columns]
     animals = np.unique(animals)
 
-    cerebellum = df.loc[df['Territories'] == 'Cerebellum']
+    cerebellum = df.loc[df['System'] == 'Sensory-Motor']
     normalized_df = df.copy()
     for animal in animals:
         filtered = df.filter(like=animal)
