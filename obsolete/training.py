@@ -1,5 +1,5 @@
 import SimpleITK as sitk
-import napari_func
+import napari_util
 from rbm.core.dice import dice_coef, dice_coef_loss
 from rbm.core.paras import KerasParas
 import matplotlib.pyplot as plt
@@ -154,7 +154,7 @@ for i in range(1, 21, 3):
 plt.show()
 
 # %gui qt magic command
-viewer = napari_func.Viewer()
+viewer = napari_util.Viewer()
 viewer.add_image(img_preprocessed)
 viewer.add_image(training_img)
 viewer.add_image(mask_training_img)

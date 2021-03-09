@@ -3,7 +3,6 @@ import glob
 import pandas as pd
 import SimpleITK as sitk
 from skimage.measure import regionprops
-from bins import hist_bins
 from utils import cerebellum_normalization
 
 

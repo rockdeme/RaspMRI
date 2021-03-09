@@ -3,7 +3,7 @@ import glob
 import napari
 from rbm.core.utils import resample_img
 from utils import rescale_voxel_size
-from registration_utilities import start_plot, end_plot, update_multires_iterations, plot_values
+from pipeline.registration_utilities import start_plot, end_plot, update_multires_iterations, plot_values
 import numpy as np
 from skimage.measure import regionprops
 import pandas as pd
@@ -84,23 +84,23 @@ def mask_original_volume(raw_array, atlas_resampled):
 template_path = 'G:/SIGMA/cranial_template_ex_vivo.nii'
 atlas_path = 'G:/SIGMA/cranial_atlas.nii'
 
-mask_path = 'G:/masked-brains/day03\\'
-files = glob.glob('G:/mri-dataset/T2_3days/*/*.nii.gz')
+mask_path = 'G:/masked-brains/day00\\'
+files = glob.glob('G:/mri-dataset/diffusion_0h/*/immediately_B0.nii.gz')
 region_labels = pd.read_csv(
     "G:\SIGMA\SIGMA_Rat_Brain_Atlases\SIGMA_Anatomical_Atlas\SIGMA_Anatomical_Brain_Atlas_ListOfStructures.csv",
     sep = ',')
 output_df = region_labels.copy()
-mri_volume_path = [item for item in files if 'whole_brain' not in item]
-mri_volume_path = [item for item in mri_volume_path if 'bias2' not in item]
+# mri_volume_path = [item for item in files if 'whole_brain' not in item]
+# mri_volume_path = [item for item in mri_volume_path if 'bias2' not in item]
 
 atlas = sitk.ReadImage(atlas_path)
 atlas_array = sitk.GetArrayFromImage(atlas)
 template = sitk.ReadImage(template_path,  sitk.sitkFloat32)
 
-mri_volume_path.sort()
-list_len = len(mri_volume_path)
+files.sort()
+list_len = len(files)
 i = 1
-for mri_volume in mri_volume_path:
+for mri_volume in files:
     mask = mask_path + mri_volume.split('\\')[1] + '_masked-img.nii'
     print('---------------------------------------------------------')
     print(f'File {i}/{list_len}')
@@ -130,7 +130,7 @@ for mri_volume in mri_volume_path:
     atlas_res_imgobj.SetSpacing(template.GetSpacing())
     template_res_imgobj = m_res
     template_res_imgobj.SetSpacing(template.GetSpacing())
-    output_string = 'G:/coregistered-files/day03/' + mri_volume.split('\\')[1]
+    output_string = 'G:/coregistered-files/day00/' + mri_volume.split('\\')[1]
     sitk.WriteImage(atlas_res_imgobj, (output_string + '_atlas.nii'))
     sitk.WriteImage(original_volume_masked, output_string + '_remasked-volume.nii')
     sitk.WriteImage(template_res_imgobj, output_string + '_template.nii')
@@ -149,7 +149,7 @@ for mri_volume in mri_volume_path:
     output_df = output_df.merge(rat_df, left_index=True, right_index=True)
     print(mask.split('\\')[-1] + ' is completed!')
 
-output_df.to_csv("G:/mri-results/t2_data_day03.csv", sep = ';')
+output_df.to_csv("G:/mri-results/dwi_data_day00.csv", sep = ';')
 
 normalized_df = output_df
 cerebellum = output_df.loc[output_df['Territories'] == 'Cerebellum']
