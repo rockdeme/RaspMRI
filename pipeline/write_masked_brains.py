@@ -9,12 +9,12 @@ import SimpleITK as sitk
 from utils import sort_array
 
 
-files = glob.glob('G:/likelihood-maps-and-brain-masks/day00/*.nii')
+files = glob.glob('G:/likelihood-maps-and-brain-masks/day01/*.nii')
 labels = [label for label in files if '_label.nii' in label]
 likelihoods = [label for label in files if '_likelihood.nii' in label]
 
-images = glob.glob('G:/mri-dataset/diffusion_0h/*/immediately_B0.nii.gz')
-images = [path for path in files if 'scan' in path]
+images = glob.glob('G:/mri-dataset/diffusion_24h/*/scan.nii.gz')
+images = [path for path in images if 'scan' in path]
 
 best_lh = 0.750
 
@@ -41,7 +41,7 @@ for likelihood_path, image in zip(likelihoods, images):
     out_t2wi_img = sitk.GetImageFromArray(t2wi_array)
     out_t2wi_img.SetSpacing(t2wi.GetSpacing())
 
-    output_string = 'G:/masked-brains/day00/' + image.split('\\')[1] + '_masked-img.nii'
+    output_string = 'G:/masked-brains/day01/' + image.split('\\')[1] + '_masked-img.nii'
     sitk.WriteImage(out_t2wi_img, output_string)
     print(image.split('\\')[1] + ' is completed!')
     i += 1
