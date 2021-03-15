@@ -4,7 +4,7 @@ import pandas as pd
 import SimpleITK as sitk
 from skimage.measure import regionprops
 from utils import cerebellum_normalization
-
+import matplotlib.pyplot as plt
 
 def get_lesion(regions):
     output = pd.DataFrame()
@@ -98,13 +98,42 @@ output_df = output_df.rename(index=index_dict)
 output_df = pd.merge(output_df, groups, right_index=True, left_index=True)
 output_df.to_csv(f'G:/mri-results/t2_data_day00_diffusion_lesion_grps.csv', sep = ';')
 
-df = pd.read_csv("G:/mri-results/dwi_lesions_v2.csv", sep=';', index_col=0)
+
+import pandas as pd
+df = pd.read_csv("G:/mri-results/dwi_lesions_v3.csv", sep=';', index_col=0)
 mph = df[df['Group'] == 'MPH']
 ctrl = df[df['Group'] == 'Ctrl']
 vehicle = df[df['Group'] == 'Cyclo']
+
 plt.scatter(mph['day00'], mph['day01'])
 plt.scatter(ctrl['day00'], ctrl['day01'])
 plt.scatter(vehicle['day00'], vehicle['day01'])
 plt.legend(['MPH', 'Ctrl', 'Cyclo'])
+plt.xlabel('Day 0')
+plt.xlim([0, 700000])
+plt.ylim([0, 700000])
+plt.plot([0, 700000], [0, 700000], 'k-', color = 'r')
 
+plt.ylabel('Day 1')
+plt.show()
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib as mpl
+mpl.use('Qt5Agg')
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(mph['day01'], mph['General'], mph['Focal'])
+ax.scatter(ctrl['day01'], ctrl['General'], ctrl['Focal'])
+ax.scatter(vehicle['day01'], vehicle['General'], vehicle['Focal'])
+ax.set_xlabel('DWI')
+ax.set_ylabel('General')
+ax.set_zlabel('Focal')
+plt.legend(['MPH', 'Ctrl', 'Cyclo'])
+plt.show()
+
+plt.scatter(mph['General'], mph['Focal'], c=mph['day01'])
+plt.scatter(ctrl['General'], ctrl['Focal'], c=ctrl['day01'])
+plt.scatter(vehicle['General'], vehicle['Focal'], c=vehicle['day01'])
+plt.legend(['MPH', 'Ctrl', 'Cyclo'])
 plt.show()
